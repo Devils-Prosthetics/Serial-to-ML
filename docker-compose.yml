@@ -1,0 +1,50 @@
+version: '3'
+
+services:
+  frontend:
+    build: ./frontend
+    container_name: frontend
+    restart: always
+    expose:
+      - '5173'
+    environment:
+      VUE_APP_SOCKET_URL: "${VUE_APP_SOCKET_URL}"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    command: 'yarn dev --host'
+    networks:
+      - app
+
+  backend:
+    build: ./backend
+    container_name: backend
+    restart: always
+    environment:
+      PORT: 3000
+      SERIAL_PORT: "${SERIAL_PORT}"
+      BAUD_RATE: "${BAUD_RATE}"
+    expose:
+      - '3000'
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+    command: 'yarn start'
+    networks:
+      - app
+
+  nginx:
+    image: nginx:1.23.1-alpine
+    ports:
+      - "${PORT}:80"
+    volumes:
+      - ./nginx/:/etc/nginx/templates/
+    depends_on:
+      - frontend
+      - backend
+    networks:
+      - app
+
+networks:
+  app:
+    driver: bridge
