@@ -30,6 +30,8 @@ services:
       - ./backend:/app
       - /app/node_modules
     command: 'yarn start'
+    devices:
+      - "${SERIAL_PORT}:${SERIAL_PORT}"
     networks:
       - app
 

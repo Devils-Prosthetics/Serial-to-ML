@@ -1,25 +1,21 @@
 import { SerialPort, ReadlineParser } from 'serialport';
+import { createSocketIO } from './socket'
 import * as fs from 'fs';
 
-const serialport = new SerialPort({ path: '/dev/cu.usbmodem11101', baudRate: 115200 })
-const parser = new ReadlineParser()
-serialport.pipe(parser)
+const io = createSocketIO();
 
-let output = ""
-let loop = 0;
+if (process.env.SERIAL_PORT === undefined) throw new Error('No serial port defined!');
+if (process.env.BAUD_RATE === undefined) throw new Error('No baud rate defined!');
+
+const serialport = new SerialPort({ path: process.env.SERIAL_PORT, baudRate: parseInt(process.env.BAUD_RATE) })
+const parser = new ReadlineParser()
+
+serialport.pipe(parser)
 parser.on('data', (data) => {
-	// console.log(typeof data);
-	if (data.toString().toLowerCase().includes("end")) {
-		fs.appendFile('openpalm.csv', `${output}`, function (err) {
-			if (err) throw err;
-			console.log('Saved!');
-		});
-		output = ""
-	}
-	output += `${data},`.replace(/(\r\n|\n|\r)/gm, "")
-	if (data.toString().toLowerCase().includes("new")) output = "\n"
+	io.emit('uart', data);
 })
 
 serialport.on('error', (error) => {
-	console.error(error);
+	throw new Error(`Can't find serialport, try different port!`)
+	console.error(error)
 })
