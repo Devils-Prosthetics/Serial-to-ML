@@ -1,0 +1,5 @@
+{
+  "socket_port": 5174,
+  "serial_port": "/dev/cu.wlan-debug",
+  "baud_rate": 11520
+}

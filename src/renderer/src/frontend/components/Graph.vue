@@ -8,7 +8,6 @@ const i = ref(0)
 const lol = ref('ping')
 
 const clickButton = (val: number): void => {
-  // this.$socket.client is `socket.io-client` instance
   socket.emit('emit_method', val)
   socket.emit('ping')
 }

@@ -2,8 +2,9 @@ import { createSocketIO } from './socket'
 import * as http from 'http'
 import cookieParser from 'cookie-parser'
 import express, { Request, Response } from 'express'
+import config from '../config.json'
 
-const PORT = 3000
+const PORT = config.socket_port
 
 const app = express()
 app.use(cookieParser())
