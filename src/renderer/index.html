@@ -6,13 +6,12 @@
     <!-- https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP -->
     <meta
       http-equiv="Content-Security-Policy"
-      content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'"
+      content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; connect-src ws://localhost:* http://localhost:*;"
     />
   </head>
 
   <body>
     <div id="app"></div>
-    <script type="module" src="/src/frontend/main.ts"></script>
-    <script type="module" src="/src/backend/server.ts"></script>
+    <script type="module" src="/src/main.ts"></script>
   </body>
 </html>
