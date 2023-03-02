@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import { useSocketIO } from '../socket.io'
 
 const { socket } = useSocketIO()
@@ -12,8 +12,21 @@ const clickButton = (val: number): void => {
   socket.emit('ping')
 }
 
-socket.on('pong', () => {
-  lol.value = 'pong'
+onMounted(() => {
+  socket.emit('setupUART', '/dev/cu.usbmodem1201')
+
+  socket.on('pong', () => {
+    lol.value = 'pong'
+  })
+
+  socket.on('uart', (data) => {
+    console.log('data:', data)
+  })
+})
+
+onUnmounted(() => {
+  socket.off('uart')
+  socket.off('pong')
 })
 </script>
 
