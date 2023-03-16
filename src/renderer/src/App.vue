@@ -1,9 +1,38 @@
 <script setup lang="ts">
-import Graph from './components/Graph.vue'
+import Controls from './components/Controls.vue'
+import { onMounted, onUnmounted } from 'vue'
+import { useSocketIO } from './socket.io'
+import { useToast } from 'vue-toastification'
+// import Graph from './components/Graph.vue'
+// import RealtimeLineGraph from './components/RealtimeLineGraph.vue'
+
+const { socket } = useSocketIO()
+const toast = useToast()
+
+onMounted(() => {
+  socket.on('error', (message) => {
+    toast.error(message, {
+      timeout: 2000
+    })
+  })
+
+  socket.on('success', (message) => {
+    toast.success(message, {
+      timeout: 2000
+    })
+  })
+})
+
+onUnmounted(() => {
+  socket.off('error')
+  socket.off('success')
+})
 </script>
 
 <template>
-  <Graph />
+  <Controls />
+  <!-- <Graph /> -->
+  <!-- <RealtimeLineGraph /> -->
 </template>
 
 <style scoped>

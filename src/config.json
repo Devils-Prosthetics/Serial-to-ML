@@ -2,5 +2,6 @@
   "socket_port": 5174,
   "vite_port": 5173,
   "serial_port": "/dev/cu.usbmodem1201",
-  "baud_rate": 11520
+  "baud_rate": 11520,
+  "file_location": "../data.csv"
 }
