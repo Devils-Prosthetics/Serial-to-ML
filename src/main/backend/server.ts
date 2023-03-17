@@ -26,7 +26,6 @@ io.on('connection', (socket) => {
   })
 
   socket.on('setupUART', (serial_port) => {
-    console.log('serial_port:', serial_port)
     setupUART(io, serial_port)
   })
 

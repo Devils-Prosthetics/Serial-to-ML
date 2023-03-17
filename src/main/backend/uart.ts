@@ -3,6 +3,7 @@ import * as fs from 'fs'
 import config from '../../config.json'
 import { Server } from 'socket.io'
 import { AutoDetectTypes } from '@serialport/bindings-cpp'
+import path from 'path'
 
 let using_serial_port = ''
 let save_serial_data = false
@@ -25,6 +26,12 @@ export const setupUART = (io: Server, serial_port: string): boolean | void => {
     })
 
     serialport.on('open', () => {
+      const configPath = path.resolve(__dirname, '../config.json')
+
+      fs.writeFile(configPath, JSON.stringify(config, null, 2), (err) => {
+        if (err) io.emit('error', 'Failed to save new port to config')
+      })
+
       io.emit('success', `Successfully connected to serialport!`)
     })
 
