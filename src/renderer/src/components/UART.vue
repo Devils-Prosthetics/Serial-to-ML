@@ -1,0 +1,47 @@
+<script setup lang="ts">
+import { onUpdated, ref, onMounted, onUnmounted, Ref } from 'vue'
+import Toggle from './Toggle.vue'
+import { useSocketIO } from '../socket.io'
+
+const { socket } = useSocketIO()
+// const toast = useToast()
+
+const dataRef: Ref<{ id: number; data: string }[]> = ref([])
+const bottom: Ref<null | HTMLElement> = ref(null)
+
+onMounted(() => {
+  socket.on('logdata', data => {
+    dataRef.value.push({ id: dataRef.value.length, data })
+    if (dataRef.value.length > 200) dataRef.value.shift()
+  })
+})
+
+onUpdated(() => {
+  if (bottom.value) bottom.value.scrollIntoView()
+})
+
+onUnmounted(() => {
+  socket.off('logdata')
+})
+</script>
+
+<template>
+  <div class="w-[600px] h-[300px] bg-slate-100 rounded-lg relative dark:bg-zinc-800">
+    <div class="relative">
+      <h2 class="text-2xl mb-3 font-bold">UART Output</h2>
+      <Toggle class="absolute top-2 right-3" />
+    </div>
+    <div class="text-clip h-5/6 w-full overflow-scroll absolute text-left">
+      <p v-for="item in dataRef" :key="item.id" class="mx-3 font-[Monego]">
+        {{ item.data }}
+      </p>
+      <href id="bottom" ref="bottom" />
+    </div>
+  </div>
+</template>
+
+<script lang="ts">
+export default {
+  name: 'UART'
+}
+</script>

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, inject } from 'vue'
+import { ref, inject } from 'vue'
 import { useSocketIO } from '../socket.io'
 
 const { socket } = useSocketIO()
@@ -44,7 +44,7 @@ const updateTag = (): void => {
         <input
           id="port"
           v-model="serial_port"
-          class="border-orange-400 border-2 px-2"
+          class="border-slate-200 border-2 px-2"
           type="text"
           name="port"
           required
@@ -75,7 +75,7 @@ const updateTag = (): void => {
         <input
           id="tag"
           v-model="tag"
-          class="border-orange-400 border-2 px-2"
+          class="border-slate-200 border-2 px-2"
           type="text"
           name="tag"
           required
@@ -84,7 +84,7 @@ const updateTag = (): void => {
 
       <button>Save</button>
     </form>
-    </div>
+  </div>
 </template>
 
 <style scoped></style>

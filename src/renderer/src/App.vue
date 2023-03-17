@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import Controls from './components/Controls.vue'
+import UART from './components/UART.vue'
 import { onMounted, onUnmounted } from 'vue'
 import { useSocketIO } from './socket.io'
 import { useToast } from 'vue-toastification'
@@ -30,7 +31,12 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <Controls />
+  <div class="flex flex-col items-center space-y-3 font-semibold">
+    <h1>UART Reader Trainer</h1>
+    <p>Read and collect UART output, and train a machine learning algorithm on it!</p>
+    <Controls />
+    <UART />
+  </div>
   <!-- <Graph /> -->
   <!-- <RealtimeLineGraph /> -->
 </template>

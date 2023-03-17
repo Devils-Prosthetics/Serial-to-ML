@@ -1,3 +1,28 @@
 @import 'tailwindcss/base';
 @import 'tailwindcss/components';
 @import 'tailwindcss/utilities';
+
+@layer base {
+  @font-face {
+    font-family: Monego;
+    font-weight: 400;
+    src: url(../fonts/Monego/Monego-Regular.otf) format("otf");
+  }
+  @font-face {
+    font-family: Monego;
+    font-weight: 700;
+    src: url(../fonts/Monego/Monego-Bold.otf) format("otf");
+  }
+  @font-face {
+    font-family: Monego;
+    font-weight: 400;
+    font-style: italic;
+    src: url(../fonts/Monego/Monego-Italic.otf) format("otf");
+  }
+  @font-face {
+    font-family: Monego;
+    font-weight: 700;
+    font-style: italic;
+    src: url(../fonts/Monego/Monego-BoldItalic.otf) format("otf");
+  }
+}

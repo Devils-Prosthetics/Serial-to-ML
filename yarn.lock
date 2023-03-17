@@ -1001,6 +1001,11 @@
   resolved "https://registry.yarnpkg.com/@vue/shared/-/shared-3.2.47.tgz#e597ef75086c6e896ff5478a6bfc0a7aa4bbd14c"
   integrity sha512-BHGyyGN3Q97EZx0taMQ+OLNuZcW3d37ZEVmEAyeoA9ERdGvm9Irc/0Fua8SNyOtV1w6BS4q25wbMzJujO9HIfQ==
 
+"@vueform/toggle@^2.1.3":
+  version "2.1.3"
+  resolved "https://registry.yarnpkg.com/@vueform/toggle/-/toggle-2.1.3.tgz#6aeec2feefb95d8e543cedbeac41f977b977f6e4"
+  integrity sha512-2W0D23Gj0X+YzE6cvWI6QeD68JBfTuABfwZTmViF0Yicc91+6KBisDkItlCVm2/Q9+Fe2kk2g0ZjFfJvkXgleQ==
+
 accepts@~1.3.4, accepts@~1.3.8:
   version "1.3.8"
   resolved "https://registry.yarnpkg.com/accepts/-/accepts-1.3.8.tgz#0bf0be125b67014adcb0b0921e62db7bffe16b2e"

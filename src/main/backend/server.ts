@@ -1,5 +1,5 @@
 import { createSocketIO } from './socket'
-import { setupUART, shouldSaveUART, stopUART, updateTagUART } from './uart'
+import { setupUART, shouldSaveUART, stopUART, updateTagUART, shouldLogUART } from './uart'
 import * as http from 'http'
 import cookieParser from 'cookie-parser'
 import express, { Request, Response } from 'express'
@@ -57,11 +57,12 @@ io.on('connection', (socket) => {
     updateTagUART(tag)
     socket.broadcast.emit('success', `Updated Tag`)
   })
-})
 
-setInterval(() => {
-  io.emit('uart', 'test')
-}, 1000)
+  socket.on('shouldLogUART', state => {
+    if (state == true) shouldLogUART(true)
+    else shouldLogUART(false)
+  })
+})
 
 server.listen(PORT, () => {
   console.log('server started at http://localhost:' + PORT)

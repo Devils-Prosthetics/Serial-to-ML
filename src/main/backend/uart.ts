@@ -7,9 +7,11 @@ import { AutoDetectTypes } from '@serialport/bindings-cpp'
 let using_serial_port = ''
 let save_serial_data = false
 let save_output_data = ''
-let serialport: SerialPort<AutoDetectTypes>
+let serialport: SerialPort<AutoDetectTypes> | undefined
 let use_tag = 'first'
 let wait_for_end = true
+let can_log_data = false
+let should_log_data = false
 
 export const setupUART = (io: Server, serial_port: string): boolean | void => {
   if (fs.existsSync(serial_port) && using_serial_port != serial_port) {
@@ -19,8 +21,7 @@ export const setupUART = (io: Server, serial_port: string): boolean | void => {
 
     serialport.pipe(parser)
     parser.on('data', (data) => {
-      io.emit('uart', data)
-      saveUART(data)
+      saveUART(io, data)
     })
 
     serialport.on('open', () => {
@@ -41,23 +42,29 @@ export const setupUART = (io: Server, serial_port: string): boolean | void => {
   }
 }
 
-const saveUART = (data: string): void => {
+const saveUART = (io: Server, data: string): void => {
+  const includesNew = data.toString().toLowerCase().includes('new')
+  const includesEnd = data.toString().toLowerCase().includes('end')
+  if (includesEnd) can_log_data = true
+  if (includesNew) can_log_data = false
+  if (should_log_data && can_log_data && !includesNew && !includesEnd) io.emit('logdata', data)
+
   if (save_serial_data === false) save_output_data = ''
   else {
     if (wait_for_end != true) {
-      if (data.toString().toLowerCase().includes('end')) {
+      if (includesEnd) {
         fs.appendFile(config.file_location, `${save_output_data}${use_tag}`, function (err) {
           if (err) throw err
           console.log('Saved!')
         })
         save_output_data = ''
       }
-      save_output_data += `${data},`.replace(/(\r\n|\n|\r)/gm, '')
 
-      if (data.toString().toLowerCase().includes('new')) save_output_data = '\n'
+      if (includesNew) save_output_data = '\n'
+      else save_output_data += `${data},`.replace(/(\r\n|\n|\r)/gm, '')
     } else {
       save_output_data = '\n'
-      if (data.toString().toLowerCase().includes('new')) wait_for_end = false
+      if (includesNew) wait_for_end = false
     }
   }
 }
@@ -68,11 +75,20 @@ export const shouldSaveUART = (toSave: boolean): void => {
 }
 
 export const stopUART = (io: Server): void => {
+  if (!serialport) {
+    io.emit('error', 'No UART connection to close')
+    return
+  }
+
   serialport.close((error) => {
-    if (error) io.emit('error', 'Unable to close UART connection')
-    else {
+    if (error) {
+      io.emit('error', 'Unable to softly close UART connection, forcing closure!')
+      serialport = undefined
+      using_serial_port = ''
+    } else {
       io.emit('success', 'Closed UART connection')
       using_serial_port = ''
+      serialport = undefined
     }
   })
 }
@@ -80,4 +96,9 @@ export const stopUART = (io: Server): void => {
 export const updateTagUART = (tag: string): void => {
   wait_for_end = true
   use_tag = tag
+}
+
+export const shouldLogUART = (state: boolean): void => {
+  console.log('changed logging status')
+  should_log_data = state
 }
