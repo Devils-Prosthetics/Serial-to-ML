@@ -6,12 +6,12 @@ import { useSocketIO } from '../socket.io'
 const { socket } = useSocketIO()
 // const toast = useToast()
 
-const dataRef: Ref<{ id: number; data: string }[]> = ref([])
+const dataRef: Ref<string[]> = ref([])
 const bottom: Ref<null | HTMLElement> = ref(null)
 
 onMounted(() => {
-  socket.on('logdata', data => {
-    dataRef.value.push({ id: dataRef.value.length, data })
+  socket.on('logdata', (data) => {
+    dataRef.value.push(data)
     if (dataRef.value.length > 200) dataRef.value.shift()
   })
 })
@@ -32,8 +32,12 @@ onUnmounted(() => {
       <Toggle class="absolute top-2 right-3" />
     </div>
     <div class="text-clip h-5/6 w-full overflow-scroll absolute text-left">
-      <p v-for="item in dataRef" :key="item.id" class="mx-3 font-[Monego]">
-        {{ item.data }}
+      <p
+        v-for="(item, index) in dataRef"
+        :key="index"
+        class="mx-3 font-[Monego] whitespace-pre-wrap"
+      >
+        {{ item }}
       </p>
       <href id="bottom" ref="bottom" />
     </div>

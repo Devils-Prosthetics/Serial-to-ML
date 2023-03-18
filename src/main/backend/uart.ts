@@ -50,8 +50,8 @@ export const setupUART = (io: Server, serial_port: string): boolean | void => {
 }
 
 const saveUART = (io: Server, data: string): void => {
-  const includesNew = data.toString().toLowerCase().includes('new')
-  const includesEnd = data.toString().toLowerCase().includes('end')
+  const includesNew = data.toString().toLowerCase().includes('newdata')
+  const includesEnd = data.toString().toLowerCase().includes('enddata')
   if (includesEnd) can_log_data = true
   if (includesNew) can_log_data = false
   if (should_log_data && can_log_data && !includesNew && !includesEnd) io.emit('logdata', data)

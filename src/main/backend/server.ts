@@ -1,5 +1,6 @@
 import { createSocketIO } from './socket'
 import { setupUART, shouldSaveUART, stopUART, updateTagUART, shouldLogUART } from './uart'
+import { train } from './learning'
 import * as http from 'http'
 import cookieParser from 'cookie-parser'
 import express, { Request, Response } from 'express'
@@ -46,7 +47,7 @@ io.on('connection', (socket) => {
   socket.on('clearSave', () => {
     fs.unlink(config.file_location, (err) => {
       if (err) {
-        socket.broadcast.emit('Error', `Failed to delete ${config.file_location}`)
+        socket.broadcast.emit('error', `Failed to delete ${config.file_location}`)
       }
       socket.broadcast.emit('success', `Deleted ${config.file_location}`)
     })
@@ -60,6 +61,18 @@ io.on('connection', (socket) => {
   socket.on('shouldLogUART', state => {
     if (state == true) shouldLogUART(true)
     else shouldLogUART(false)
+  })
+
+  socket.on('train', () => {
+    train()
+      .then(([loss, accuracy]) => {
+        socket.emit('success', 'Training succeeded!')
+        socket.broadcast.emit('logdata', `loss: ${loss}   accuracy: ${accuracy}`)
+      })
+      .catch((error) => {
+        socket.emit('error', 'Training failed!')
+        console.error(error)
+      })
   })
 })
 

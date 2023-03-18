@@ -37,13 +37,11 @@ const train = (): void => {
 <template>
   <div class="flex flex-col items-center space-y-3 font-semibold relative">
     <button class="absolute top-5 right-0" @click="train">Train!</button>
-    <h1>UART Reader Trainer</h1>
+    <h1>UART-to-ML</h1>
     <p>Read and collect UART output, and train a machine learning algorithm on it!</p>
     <Controls />
     <UART />
   </div>
-  <!-- <Graph /> -->
-  <!-- <RealtimeLineGraph /> -->
 </template>
 
 <style scoped>

@@ -67,7 +67,7 @@ const updateTag = (): void => {
       <button class="block mb-2" @click="deleteData">Delete</button>
     </div>
     <form class="flex justify-center item-center flex-col ml-12" @submit.prevent="updateTag">
-      <h2 class="text-2xl mb-3">Tagging</h2>
+      <h2 class="text-2xl mb-3">Classifier</h2>
 
       <div class="mb-3">
         <label class="pr-3" for="tag">Tag</label>
