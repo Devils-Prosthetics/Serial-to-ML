@@ -58,7 +58,7 @@ io.on('connection', (socket) => {
     socket.broadcast.emit('success', `Updated Tag`)
   })
 
-  socket.on('shouldLogUART', state => {
+  socket.on('shouldLogUART', (state) => {
     if (state == true) shouldLogUART(true)
     else shouldLogUART(false)
   })

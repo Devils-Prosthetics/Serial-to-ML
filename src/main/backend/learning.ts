@@ -1,6 +1,7 @@
 import * as tf from '@tensorflow/tfjs-node'
 import * as fs from 'fs'
 import config from '../../config.json'
+import seedrandom from 'seedrandom'
 
 const labelsNames: string[] = []
 
@@ -46,7 +47,7 @@ export const train = (): Promise<number[]> => {
         .then(() => {
           const result = model.evaluate(XTestTensor, yTestTensor)
           const loss = result[0].dataSync()[0]
-          const accuracy = result[0].dataSync()[0]
+          const accuracy = result[1].dataSync()[0]
 
           resolve([loss, accuracy])
         })
@@ -59,13 +60,19 @@ export const train = (): Promise<number[]> => {
   })
 }
 
-const trainTestSplit = (X, y, testSize = 0.2): number[][] => {
+const trainTestSplit = (
+  X,
+  y,
+  testSize = 0.2,
+  randomState: undefined | string = undefined
+): number[][] => {
+  const rng = seedrandom(randomState)
   // Combine X and y into a single array
   const data = X.map((x, i) => [x, y[i]])
 
   // Shuffle the data using Fisher-Yates shuffle algorithm
   for (let i = data.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1))
+    const j = Math.floor(rng() * (i + 1))
     ;[data[i], data[j]] = [data[j], data[i]]
   }
 
