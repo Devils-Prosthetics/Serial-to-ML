@@ -15,7 +15,9 @@ let can_log_data = false
 let should_log_data = false
 
 export const setupUART = (io: Server, serial_port: string): boolean | void => {
+  console.log(`Initalizing setupUART`)
   if (fs.existsSync(serial_port) && using_serial_port != serial_port) {
+    console.log(`Setting up uart with serial port ${serial_port}`)
     serialport = new SerialPort({ path: serial_port, baudRate: config.baud_rate })
     const parser = new ReadlineParser()
     using_serial_port = serial_port
