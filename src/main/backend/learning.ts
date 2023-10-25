@@ -1,113 +1,131 @@
-import * as tf from '@tensorflow/tfjs-node'
+/// <reference types="vite/client" />
+import * as tf from '@tensorflow/tfjs-node-gpu'
 import * as fs from 'fs'
 import config from '../../config.json'
-import seedrandom from 'seedrandom'
+import { Worker } from 'node:worker_threads'
+import fitModel from './fit_model.js?raw'
+import path from 'path'
 
-const labelsNames: string[] = []
-
-export const train = (): Promise<number[]> => {
-  return new Promise((resolve, reject) => {
-    try {
-      // Define the model architecture
-      const model = tf.sequential()
-      model.add(tf.layers.dense({ units: 128, activation: 'relu', inputShape: [96] }))
-      model.add(tf.layers.dense({ units: 128, activation: 'relu' }))
-      model.add(tf.layers.dense({ units: 4, activation: 'softmax' }))
-
-      model.compile({
-        optimizer: 'adam',
-        loss: 'sparseCategoricalCrossentropy',
-        metrics: ['accuracy']
-      })
-
-      // Load the CSV file into memory
-      const data = fs
-        .readFileSync(config.file_location, 'utf-8')
-        .split('\n')
-        .map((row) => row.split(','))
-
-      // Split the data into features and labels
-      const labels = data.map((row) => returnLabelNumbers(row[row.length - 1]))
-      let features = data.map((row) => row.slice(0, -1).map(parseFloat))
-
-      features = normalize(features)
-
-      const [XTrain, XTest, yTrain, yTest] = trainTestSplit(features, labels)
-
-      // Convert the features and labels into tensors
-      const XTrainTensor = tf.tensor(XTrain)
-      const yTrainTensor = tf.tensor(yTrain)
-
-      const XTestTensor = tf.tensor(XTest)
-      const yTestTensor = tf.tensor(yTest)
-
-      // Train the model
-      model
-        .fit(XTrainTensor, yTrainTensor, { epochs: 50, validationData: [XTestTensor, yTestTensor] })
-        .then(() => {
-          const result = model.evaluate(XTestTensor, yTestTensor)
-          const loss = result[0].dataSync()[0]
-          const accuracy = result[1].dataSync()[0]
-
-          resolve([loss, accuracy])
-        })
-        .catch((error) => {
-          reject(error)
-        })
-    } catch (error) {
-      reject(error)
-    }
-  })
+interface NormalizationOptions {
+	median?: number
+	iqr?: number // Interquartile Range
 }
 
-const trainTestSplit = (
-  X,
-  y,
-  testSize = 0.2,
-  randomState: undefined | string = undefined
-): number[][] => {
-  const rng = seedrandom(randomState)
-  // Combine X and y into a single array
-  const data = X.map((x, i) => [x, y[i]])
-
-  // Shuffle the data using Fisher-Yates shuffle algorithm
-  for (let i = data.length - 1; i > 0; i--) {
-    const j = Math.floor(rng() * (i + 1))
-    ;[data[i], data[j]] = [data[j], data[i]]
-  }
-
-  // Calculate the split index
-  const splitIndex = Math.floor(data.length * (1 - testSize))
-
-  // Split the data into train and test sets
-  const XTrain = data.slice(0, splitIndex).map((d) => d[0])
-  const yTrain = data.slice(0, splitIndex).map((d) => d[1])
-  const XTest = data.slice(splitIndex).map((d) => d[0])
-  const yTest = data.slice(splitIndex).map((d) => d[1])
-
-  return [XTrain, XTest, yTrain, yTest]
+export type FitModelInput = {
+	features: number[][]
+	labels: number[]
+	labelsNames: string[]
+	model_location: string
 }
 
-const normalize = (arr: number[][]): number[][] => {
-  const max: number[] = []
-  const min: number[] = []
+export type FitModelOutput = {
+	accuracy: number
+	loss: number
+}
 
-  arr.forEach((row) => {
-    max.push(Math.max(...row))
-    min.push(Math.min(...row))
-  })
+let labelsNames: string[] = []
+let normalizedTrainingInfo: NormalizationOptions | undefined
 
-  arr.forEach((row, i) => {
-    row.forEach((val, j) => {
-      arr[i][j] = (val - min[j]) / (max[j] - min[j])
-    })
-  })
+export const train = (): Promise<[number, number, NormalizationOptions, string[], number]> => {
+	return new Promise((resolve, reject) => {
+		try {
+			labelsNames = []
+			normalizedTrainingInfo = undefined
 
-  return arr
+			// Load the CSV file into memory
+			const data = fs
+				.readFileSync(config.file_location, 'utf-8')
+				.trim()
+				.split('\n')
+				.map((row) => row.split(','))
+
+			// Split the data into features and labels
+			const labels = data.map((row) => returnLabelNumbers(row[row.length - 1]))
+			let features = data.map((row) => row.slice(0, -1).map(parseFloat))
+
+			const normalized = normalize(features)
+			normalizedTrainingInfo = normalized.info
+			features = normalized.data
+
+			const workerData: FitModelInput = {
+				features,
+				labels,
+				labelsNames,
+				model_location: config.model_location
+			}
+
+			const worker = new Worker(fitModel, {
+				workerData,
+				eval: true
+			})
+
+			worker.on('message', (data: FitModelOutput) => {
+				console.log('message recieved')
+				resolve([
+					data.loss,
+					data.accuracy,
+					normalized.info,
+					labelsNames,
+					features[0].length
+				])
+			})
+		} catch (error) {
+			reject(error)
+		}
+	})
+}
+
+export const test = async (
+	value: string
+): Promise<{ prediction: string; probabilities: number[] }> => {
+	const saveLocation = path.resolve(config.model_location, 'model.json')
+	const model = await tf.loadLayersModel(`file://${saveLocation}`)
+
+	const numbers = value.split(',').map((item) => parseFloat(item.trim()))
+	const normalized = normalize([numbers], normalizedTrainingInfo)
+
+	console.log(normalized.data)
+
+	const predictions = model!.predict(tf.tensor2d(normalized.data)) as tf.Tensor
+
+	return {
+		prediction: labelsNames[predictions.argMax(1).dataSync()[0]],
+		probabilities: predictions.arraySync()[0] as number[]
+	}
+}
+
+export const resetTraining = (): void => {
+	labelsNames = []
+	normalizedTrainingInfo = undefined
+}
+
+function normalize(
+	data: number[][],
+	options: NormalizationOptions = {}
+): { data: number[][]; info: NormalizationOptions } {
+	// Flatten the data for calculations
+	const flatData = data.flat()
+
+	// Sort the flattened data
+	const sortedData = [...flatData].sort((a, b) => a - b)
+
+	// Determine the median and IQR either from options or by calculating them
+	const median =
+		options.median !== undefined
+			? options.median
+			: sortedData[Math.floor(sortedData.length / 2)]
+	const q1 = sortedData[Math.floor(sortedData.length / 4)]
+	const q3 = sortedData[Math.floor((3 * sortedData.length) / 4)]
+	const iqr = options.iqr !== undefined ? options.iqr : q3 - q1
+
+	// Robust scaling
+	const scaledData: number[][] = data.map((row) => row.map((val) => (val - median) / iqr))
+
+	return { data: scaledData, info: { median, iqr } }
 }
 
 const returnLabelNumbers = (label: string): number => {
-  label = label.replace(/(\r\n|\n|\r)/gm, '')
-  if (!labelsNames.includes(label)) labelsNames.push(label)
-  return labelsNames.indexOf(label)
+	label = label.replace(/(\r\n|\n|\r)/gm, '')
+	if (!labelsNames.includes(label)) labelsNames.push(label)
+	return labelsNames.indexOf(label)
 }

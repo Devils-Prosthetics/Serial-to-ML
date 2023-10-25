@@ -5,13 +5,13 @@ import config from '../../config.json'
 let io: Server
 
 export function createSocketIO(server?: http.Server): Server {
-  if (io !== null) {
-    io = new Server(server, {
-      cors: {
-        origin: `http://localhost:${config.vite_port}`
-      }
-    })
-  }
+	if (io !== null) {
+		io = new Server(server, {
+			cors: {
+				origin: `http://localhost:${config.vite_port}`
+			}
+		})
+	}
 
-  return io
+	return io
 }

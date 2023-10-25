@@ -7,18 +7,18 @@ import config from '../config.json'
 // renderer only if context isolation is enabled, otherwise
 // just add to the DOM global.
 if (process.contextIsolated) {
-  try {
-    contextBridge.exposeInMainWorld('electron', electronAPI)
-    contextBridge.exposeInMainWorld('api', api)
-    contextBridge.exposeInMainWorld('config', config)
-  } catch (error) {
-    console.error(error)
-  }
+	try {
+		contextBridge.exposeInMainWorld('electron', electronAPI)
+		contextBridge.exposeInMainWorld('api', api)
+		contextBridge.exposeInMainWorld('config', config)
+	} catch (error) {
+		console.error(error)
+	}
 } else {
-  // @ts-ignore (define in dts)
-  window.electron = electronAPI
-  // @ts-ignore (define in dts)
-  window.api = api
-  // @ts-ignore (define in dts)
-  window.config = config
+	// @ts-ignore (define in dts)
+	window.electron = electronAPI
+	// @ts-ignore (define in dts)
+	window.api = api
+	// @ts-ignore (define in dts)
+	window.config = config
 }

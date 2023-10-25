@@ -8,14 +8,14 @@ const value = ref(false)
 const { socket } = useSocketIO()
 
 const updateLogging = (): void => {
-  socket.emit('shouldLogUART', !value.value)
+	socket.emit('shouldLogUART', !value.value)
 }
 </script>
 
 <template>
-  <div>
-    <Toggle v-model="value" @input="updateLogging" />
-  </div>
+	<div>
+		<Toggle v-model="value" @input="updateLogging" />
+	</div>
 </template>
 
 <style src="@vueform/toggle/themes/default.css"></style>
