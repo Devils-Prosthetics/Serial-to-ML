@@ -1,5 +1,5 @@
 const { parentPort, workerData } = require('worker_threads')
-const tf = require('@tensorflow/tfjs-node-gpu')
+const tf = require('@tensorflow/tfjs')
 const seedrandom = require('seedrandom')
 const path = require('path')
 

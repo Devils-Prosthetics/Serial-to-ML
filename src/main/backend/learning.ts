@@ -1,5 +1,5 @@
 /// <reference types="vite/client" />
-import * as tf from '@tensorflow/tfjs-node-gpu'
+import * as tf from '@tensorflow/tfjs'
 import * as fs from 'fs'
 import config from '../../config.json'
 import { Worker } from 'node:worker_threads'
