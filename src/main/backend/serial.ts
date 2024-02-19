@@ -14,17 +14,17 @@ let wait_for_end = true
 let can_log_data = false
 let should_log_data = false
 
-export const setupUART = (io: Server, serial_port: string): boolean | void => {
-	console.log(`Initalizing setupUART`)
+export const setupSerial = (io: Server, serial_port: string): boolean | void => {
+	console.log(`Initalizing setupSerial`)
 	if (fs.existsSync(serial_port) && using_serial_port != serial_port) {
-		console.log(`Setting up uart with serial port ${serial_port}`)
+		console.log(`Setting up serial with serial port ${serial_port}`)
 		serialport = new SerialPort({ path: serial_port, baudRate: config.baud_rate })
 		const parser = new ReadlineParser()
 		using_serial_port = serial_port
 
 		serialport.pipe(parser)
 		parser.on('data', (data) => {
-			saveUART(io, data)
+			saveSerial(io, data)
 		})
 
 		serialport.on('open', () => {
@@ -51,7 +51,7 @@ export const setupUART = (io: Server, serial_port: string): boolean | void => {
 	}
 }
 
-const saveUART = (io: Server, data: string): void => {
+const saveSerial = (io: Server, data: string): void => {
 	const includesNew = data.toString().toLowerCase().includes('newdata')
 	const includesEnd = data.toString().toLowerCase().includes('enddata')
 	if (includesEnd) can_log_data = true
@@ -82,7 +82,7 @@ const saveUART = (io: Server, data: string): void => {
 	}
 }
 
-export const shouldSaveUART = (toSave: boolean): void => {
+export const shouldSaveSerial = (toSave: boolean): void => {
 	if (toSave === false) {
 		save_serial_data = false
 		wait_for_end = true
@@ -96,31 +96,31 @@ export const shouldSaveUART = (toSave: boolean): void => {
 	}
 }
 
-export const stopUART = (io: Server): void => {
+export const stopSerial = (io: Server): void => {
 	if (!serialport) {
-		io.emit('error', 'No UART connection to close')
+		io.emit('error', 'No serial connection to close')
 		return
 	}
 
 	serialport.close((error) => {
 		if (error) {
-			io.emit('error', 'Unable to softly close UART connection, forcing closure!')
+			io.emit('error', 'Unable to softly close serial connection, forcing closure!')
 			serialport = undefined
 			using_serial_port = ''
 		} else {
-			io.emit('success', 'Closed UART connection')
+			io.emit('success', 'Closed serial connection')
 			using_serial_port = ''
 			serialport = undefined
 		}
 	})
 }
 
-export const updateTagUART = (tag: string): void => {
+export const updateTagSerial = (tag: string): void => {
 	wait_for_end = true
 	use_tag = tag
 }
 
-export const shouldLogUART = (state: boolean): void => {
+export const shouldLogSerial = (state: boolean): void => {
 	console.log('changed logging status')
 	should_log_data = state
 }

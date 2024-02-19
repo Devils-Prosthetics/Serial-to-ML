@@ -9,11 +9,11 @@ const serial_port = ref(serial)
 const tag = ref('first')
 
 const connect = (): void => {
-	socket.emit('setupUART', serial_port.value)
+	socket.emit('setupSerial', serial_port.value)
 }
 
 const disconnect = (): void => {
-	socket.emit('stopUART')
+	socket.emit('stopSerial')
 }
 
 const enable = (): void => {

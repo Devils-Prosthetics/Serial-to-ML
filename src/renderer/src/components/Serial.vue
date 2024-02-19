@@ -28,7 +28,7 @@ onUnmounted(() => {
 <template>
 	<div class="w-[600px] h-[300px] bg-slate-100 rounded-lg relative dark:bg-zinc-800">
 		<div class="relative flex items-center justify-between my-2 mx-4">
-			<h2 class="text-2xl font-bold">UART Output</h2>
+			<h2 class="text-2xl font-bold">Serial Output</h2>
 			<div class="flex space-x-2 items-center">
 				<button @click="dataRef = []">Clear</button>
 				<Toggle />
@@ -49,6 +49,6 @@ onUnmounted(() => {
 
 <script lang="ts">
 export default {
-	name: 'UART'
+	name: 'Serial'
 }
 </script>

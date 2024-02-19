@@ -1,46 +1,37 @@
-import { createSocketIO } from './socket'
-import { setupUART, shouldSaveUART, stopUART, updateTagUART, shouldLogUART } from './uart'
+import { Server } from "socket.io";
+import { setupSerial, shouldSaveSerial, stopSerial, updateTagSerial, shouldLogSerial } from './serial'
 import { resetTraining, test, train } from './learning'
-import * as http from 'http'
-import cookieParser from 'cookie-parser'
-import express, { Request, Response } from 'express'
 import config from '../../config.json'
 import * as fs from 'fs'
 
 const PORT = config.socket_port
 
-const app = express()
-app.use(cookieParser())
-app.use(express.urlencoded({ extended: true }))
-app.use(express.json())
-
-const server = http.createServer(app)
-const io = createSocketIO(server)
-
-app.get('/', (_req: Request, res: Response) => {
-	res.sendStatus(200)
-})
+const io = new Server(PORT, {
+	cors: {
+		origin: `http://localhost:${config.vite_port}`
+	}
+});
 
 io.on('connection', (socket) => {
 	socket.on('ping', () => {
 		io.emit('pong')
 	})
 
-	socket.on('setupUART', (serial_port) => {
-		setupUART(io, serial_port)
+	socket.on('setupSerial', (serial_port) => {
+		setupSerial(io, serial_port)
 	})
 
-	socket.on('stopUART', () => {
-		stopUART(io)
+	socket.on('stopSerial', () => {
+		stopSerial(io)
 	})
 
 	socket.on('startSave', () => {
-		shouldSaveUART(true)
+		shouldSaveSerial(true)
 		socket.broadcast.emit('success', `Started to save data to ${config.file_location}`)
 	})
 
 	socket.on('endSave', () => {
-		shouldSaveUART(false)
+		shouldSaveSerial(false)
 		socket.broadcast.emit('success', `Ended saving of data`)
 	})
 
@@ -56,7 +47,7 @@ io.on('connection', (socket) => {
 	})
 
 	socket.on('updateTag', (tag) => {
-		updateTagUART(tag)
+		updateTagSerial(tag)
 		socket.broadcast.emit('success', `Updated Tag`)
 	})
 
@@ -70,9 +61,9 @@ io.on('connection', (socket) => {
 		)
 	})
 
-	socket.on('shouldLogUART', (state) => {
-		if (state == true) shouldLogUART(true)
-		else shouldLogUART(false)
+	socket.on('shouldLogSerial', (state) => {
+		if (state == true) shouldLogSerial(true)
+		else shouldLogSerial(false)
 	})
 
 	socket.on('train', () => {
@@ -91,8 +82,4 @@ io.on('connection', (socket) => {
 				console.error(error)
 			})
 	})
-})
-
-server.listen(PORT, () => {
-	console.log('server started at http://localhost:' + PORT)
 })

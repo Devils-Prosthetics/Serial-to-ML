@@ -8,7 +8,7 @@ const value = ref(false)
 const { socket } = useSocketIO()
 
 const updateLogging = (): void => {
-	socket.emit('shouldLogUART', !value.value)
+	socket.emit('shouldLogSerial', !value.value)
 }
 </script>
 

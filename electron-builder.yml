@@ -1,5 +1,5 @@
 appId: com.devilsprosthetics.app
-productName: UART-to-ML
+productName: Serial-to-ML
 directories:
     buildResources: build
 files:
@@ -12,7 +12,7 @@ asarUnpack:
     - resources/*
 afterSign: build/notarize.js
 win:
-    executableName: UART-to-ML
+    executableName: Serial-to-ML
 nsis:
     artifactName: ${name}-${version}-setup.${ext}
     shortcutName: ${productName}

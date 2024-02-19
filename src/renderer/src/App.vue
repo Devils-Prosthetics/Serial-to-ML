@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import Controls from './components/Controls.vue'
-import UART from './components/UART.vue'
+import Serial from './components/Serial.vue'
 import { onMounted, onUnmounted } from 'vue'
 import { useSocketIO } from './socket.io'
 import { useToast } from 'vue-toastification'
@@ -44,10 +44,10 @@ const test = (): void => {
 <template>
 	<div class="flex flex-col items-center space-y-3 font-semibold relative">
 		<button class="absolute top-5 right-0" @click="train">Train!</button>
-		<h1>UART-to-ML</h1>
-		<p>Read and collect UART output, and train a machine learning algorithm on it!</p>
+		<h1>Serial-to-ML</h1>
+		<p>Read and collect serial output, and train a machine learning algorithm on it!</p>
 		<Controls />
-		<UART />
+		<Serial />
 		<form class="flex justify-center item-center flex-col ml-12" @submit.prevent="test">
 			<h2 class="text-2xl mb-3">Classifier</h2>
 
