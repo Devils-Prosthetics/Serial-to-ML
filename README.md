@@ -31,6 +31,8 @@ $ npm run build:linux
 
 ## Architecture
 The project is divided into two main parts: the frontend and the backend.
+<img width="1584" alt="Result" src="https://github.com/Devils-Prosthetics/Serial-to-ML/assets/75190918/f1fc7cf6-2cb9-4b99-b914-a82d44f368f8">
+
 
 ### Frontend
 The frontend is built using Vue and TypeScript. It is responsible for the user interface and the communication with the backend.
