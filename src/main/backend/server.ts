@@ -6,12 +6,14 @@ import * as fs from 'fs'
 
 const PORT = config.socket_port
 
+// Create a new socket.io server
 const io = new Server(PORT, {
 	cors: {
 		origin: `http://localhost:${config.vite_port}`
 	}
 });
 
+// Handle the connection event
 io.on('connection', (socket) => {
 	socket.on('ping', () => {
 		io.emit('pong')
@@ -54,10 +56,10 @@ io.on('connection', (socket) => {
 	socket.on('test', async (value) => {
 		const res = await test(value)
 		socket.broadcast.emit(
-			'logdata',
+			'logdata', // Send the data to the client
 			`prediction: ${res.prediction}\nprobabilities: ${res.probabilities
-				.map((prob) => Math.trunc(prob * 10000) / 10000)
-				.join(', ')}`
+				.map((prob) => Math.trunc(prob * 10000) / 10000) // Round to 4 decimal places
+				.join(', ')}` // Join the probabilities together to one string
 		)
 	})
 
@@ -67,9 +69,11 @@ io.on('connection', (socket) => {
 	})
 
 	socket.on('train', () => {
-		train()
+		train() // Start the training
 			.then(([loss, accuracy, info, labels, columns]) => {
-				socket.emit('success', 'Training succeeded!')
+				socket.emit('success', 'Training succeeded!') // Send the success message
+				
+				// Send the training data to the client
 				socket.broadcast.emit(
 					'logdata',
 					`loss: ${loss}   accuracy: ${accuracy}   iqr: ${info.iqr}   median: ${
@@ -77,7 +81,7 @@ io.on('connection', (socket) => {
 					}   labels: ${labels.join(', ')}   columns: ${columns}`
 				)
 			})
-			.catch((error) => {
+			.catch((error) => { // Handle the error
 				socket.emit('error', 'Training failed!')
 				console.error(error)
 			})
