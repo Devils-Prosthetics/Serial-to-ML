@@ -6,12 +6,6 @@ import { Worker } from 'node:worker_threads'
 import fitModel from './fit_model.js?raw'
 import path from 'path'
 
-// Types
-interface NormalizationOptions {
-	median?: number
-	iqr?: number // Interquartile Range
-}
-
 export type FitModelInput = {
 	features: number[][]
 	labels: number[]
@@ -25,7 +19,6 @@ export type FitModelOutput = {
 }
 
 let labelsNames: string[] = []
-let normalizedTrainingInfo: NormalizationOptions | undefined
 
 /**
  * Train a model using the provided CSV file
@@ -37,13 +30,12 @@ let normalizedTrainingInfo: NormalizationOptions | undefined
  * console.log(`Loss: ${loss}, Accuracy: ${accuracy}, Normalization Info: ${info}, Labels: ${labels}, Number of Features: ${numFeatures}`)
  * // Output: Loss: 0.1, Accuracy: 0.9, Normalization Info: {median: 0, iqr: 1}, Labels: ['A', 'B', 'C'], Number of Features: 4
  */
-export const train = (): Promise<[number, number, NormalizationOptions, string[], number]> => {
+export const train = (): Promise<[number, number, string[], number]> => {
 	// Return a promise to allow for async operations
 	return new Promise((resolve, reject) => {
 		try {
 			// Reset the labels and training info variables
 			labelsNames = []
-			normalizedTrainingInfo = undefined
 
 			// Load the CSV file into memory
 			const data = fs
@@ -55,11 +47,6 @@ export const train = (): Promise<[number, number, NormalizationOptions, string[]
 			// Split the data into features and labels
 			const labels = data.map((row) => returnLabelNumbers(row[row.length - 1]))
 			let features = data.map((row) => row.slice(0, -1).map(parseFloat))
-
-			// Normalize the features
-			const normalized = normalize(features)
-			normalizedTrainingInfo = normalized.info
-			features = normalized.data
 
 			// Define data to send to the worker
 			const workerData: FitModelInput = {
@@ -81,7 +68,6 @@ export const train = (): Promise<[number, number, NormalizationOptions, string[]
 				resolve([
 					data.loss,
 					data.accuracy,
-					normalized.info,
 					labelsNames,
 					features[0].length
 				])
@@ -112,12 +98,9 @@ export const test = async (
 
 	// Normalize the value from the user
 	const numbers = value.split(',').map((item) => parseFloat(item.trim()))
-	const normalized = normalize([numbers], normalizedTrainingInfo)
-
-	console.log(normalized.data)
 
 	// Make a prediction
-	const predictions = model!.predict(tf.tensor2d(normalized.data)) as tf.Tensor
+	const predictions = model!.predict(tf.tensor2d([numbers])) as tf.Tensor
 
 	// Return the prediction and the probabilities
 	return {
@@ -129,7 +112,6 @@ export const test = async (
 // Reset the training variables
 export const resetTraining = (): void => {
 	labelsNames = []
-	normalizedTrainingInfo = undefined
 }
 
 /**
@@ -141,30 +123,6 @@ export const resetTraining = (): void => {
  * const { data, info } = normalize([[1, 2, 3], [4, 5, 6]])
  * console.log(`Data: ${data}, Info: ${info}`)
  */
-function normalize(
-	data: number[][],
-	options: NormalizationOptions = {}
-): { data: number[][]; info: NormalizationOptions } {
-	// Flatten the data for calculations
-	const flatData = data.flat()
-
-	// Sort the flattened data
-	const sortedData = [...flatData].sort((a, b) => a - b)
-
-	// Determine the median and IQR either from options or by calculating them
-	const median =
-		options.median !== undefined
-			? options.median
-			: sortedData[Math.floor(sortedData.length / 2)]
-	const q1 = sortedData[Math.floor(sortedData.length / 4)]
-	const q3 = sortedData[Math.floor((3 * sortedData.length) / 4)]
-	const iqr = options.iqr !== undefined ? options.iqr : q3 - q1
-
-	// Robust scaling
-	const scaledData: number[][] = data.map((row) => row.map((val) => (val - median) / iqr))
-
-	return { data: scaledData, info: { median, iqr } }
-}
 
 /**
  * Return the index of the label
