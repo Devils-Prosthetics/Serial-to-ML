@@ -1,7 +1,8 @@
 const { parentPort, workerData } = require('worker_threads')
-const tf = require('@tensorflow/tfjs')
+const tf = require('@tensorflow/tfjs-node')
 const seedrandom = require('seedrandom')
 const path = require('path')
+
 
 /**
  * Split the features and labels into train and test sets
@@ -42,70 +43,78 @@ const trainTestSplit = (X, y, testSize = 0.2, randomState = undefined) => {
 	return [XTrain, XTest, yTrain, yTest]
 }
 
-// Get the features, labels, labelsNames and model location from the worker data
-const { features, labels, labelsNames, model_location } = workerData
+try {
+	// Get the features, labels, labelsNames and model location from the worker data
+	const { features, labels, labelsNames, model_location } = workerData
 
-// Split the features and labels into train and test sets
-const [XTrain, XTest, yTrain, yTest] = trainTestSplit(features, labels)
+	if (labelsNames.length <= 1) throw new Error("Need at least 2 labels");
 
-// Convert the features and labels into tensors
-const XTrainTensor = tf.tensor(XTrain)
-const yTrainTensor = tf.tensor(yTrain)
+	// Split the features and labels into train and test sets
+	const [XTrain, XTest, yTrain, yTest] = trainTestSplit(features, labels)
 
-const XTestTensor = tf.tensor(XTest)
-const yTestTensor = tf.tensor(yTest)
+	// Convert the features and labels into tensors
+	const XTrainTensor = tf.tensor(XTrain)
+	const yTrainTensor = tf.tensor(yTrain)
 
-// Define the model architecture
-const model = tf.sequential()
-model.add(tf.layers.dense({ units: 512, activation: 'relu', inputShape: [features[0].length] }))
-model.add(tf.layers.dense({ units: 512, activation: 'relu' }))
-model.add(tf.layers.dense({ units: 128, activation: 'relu' }))
-model.add(tf.layers.dense({ units: labelsNames.length, activation: 'softmax' }))
+	const XTestTensor = tf.tensor(XTest)
+	const yTestTensor = tf.tensor(yTest)
 
-// Compile the model
-model.compile({
-	optimizer: 'adam',
-	loss: 'sparseCategoricalCrossentropy',
-	metrics: ['accuracy']
-})
+	// Define the model architecture
+	const model = tf.sequential()
+	model.add(tf.layers.dense({ units: 10, activation: 'relu', inputShape: [features[0].length] }))
+	model.add(tf.layers.dense({ units: 10, activation: 'relu' }))
+	model.add(tf.layers.dense({ units: labelsNames.length, activation: 'softmax' }))
 
-// Create variable to store the best weights
-let bestWeights = null
-let bestValLoss = Number.POSITIVE_INFINITY
+	// Compile the model
+	model.compile({
+		optimizer: 'adam',
+		loss: 'sparseCategoricalCrossentropy',
+		metrics: ['accuracy']
+	})
 
-// Custom callback to store best weights
-const customCallback = {
-	onEpochEnd: async (_, logs) => {
-		if (logs.val_loss < bestValLoss) {
-			bestValLoss = logs.val_loss
-			bestWeights = model.getWeights()
+	// Create variable to store the best weights
+	let bestWeights = null
+	let bestValLoss = Number.POSITIVE_INFINITY
+
+	// Custom callback to store best weights
+	const customCallback = {
+		onEpochEnd: async (_, logs) => {
+			if (logs.val_loss < bestValLoss) {
+				bestValLoss = logs.val_loss
+				bestWeights = model.getWeights()
+			}
 		}
 	}
+
+	// Train the model
+	model
+		.fit(XTrainTensor, yTrainTensor, {
+			epochs: 50,
+			validationData: [XTestTensor, yTestTensor], // Use the test set as the validation set
+			callbacks: [customCallback], 				// Use the custom callback
+			verbose: false
+		})
+		.then(() => {
+			// Set the best weights
+			if (bestWeights) {
+				model.setWeights(bestWeights)
+			}
+
+			// Evaluate the model
+			const result = model.evaluate(XTestTensor, yTestTensor)
+			const loss = result[0].dataSync()[0]
+			const accuracy = result[1].dataSync()[0]
+
+			// Save the model
+			const saveLocation = path.resolve(model_location)
+			model.save(`file://${saveLocation}`)
+
+			// Send the loss and accuracy to the parent thread
+			parentPort?.postMessage({ loss, accuracy, success: true })
+		}).catch(error => {
+			parentPort?.postMessage({ message: error.message, success: false })
+		})
+} catch (error) {
+	parentPort?.postMessage({ message: error.message, success: false })	
 }
 
-// Train the model
-model
-	.fit(XTrainTensor, yTrainTensor, {
-		epochs: 50,
-		validationData: [XTestTensor, yTestTensor], // Use the test set as the validation set
-		callbacks: [customCallback], 				// Use the custom callback
-		verbose: false
-	})
-	.then(() => {
-		// Set the best weights
-		if (bestWeights) {
-			model.setWeights(bestWeights)
-		}
-
-		// Evaluate the model
-		const result = model.evaluate(XTestTensor, yTestTensor)
-		const loss = result[0].dataSync()[0]
-		const accuracy = result[1].dataSync()[0]
-
-		// Save the model
-		const saveLocation = path.resolve(model_location)
-		model.save(`file://${saveLocation}`)
-
-		// Send the loss and accuracy to the parent thread
-		parentPort?.postMessage({ loss, accuracy })
-	})

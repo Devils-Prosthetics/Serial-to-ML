@@ -12,7 +12,7 @@ let save_output_data = ''									// The data to save
 let serialport: SerialPort<AutoDetectTypes> | undefined		// The serial port to use
 let use_tag = 'first'										// The tag to use for saving
 let wait_for_end = true										// If the program should wait for the end of the data
-let can_log_data = false									// If the data can be logged
+let can_log_data = true										// If the data can be logged
 let should_log_data = false									// If the data should be logged
 
 /**

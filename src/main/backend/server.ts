@@ -81,9 +81,9 @@ io.on('connection', (socket) => {
 					}   labels: ${labels.join(', ')}   columns: ${columns}`
 				)
 			})
-			.catch((error) => { // Handle the error
-				socket.emit('error', 'Training failed!')
-				console.error(error)
+			.catch((reason) => { // Handle the error
+				socket.emit('error', `Training failed! Due to: ${reason}`)
+				console.error(reason)
 			})
 	})
 })

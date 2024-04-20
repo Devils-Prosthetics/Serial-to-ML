@@ -1,5 +1,5 @@
 /// <reference types="vite/client" />
-import * as tf from '@tensorflow/tfjs'
+import * as tf from '@tensorflow/tfjs-node'
 import * as fs from 'fs'
 import config from '../../config.json'
 import { Worker } from 'node:worker_threads'
@@ -16,6 +16,10 @@ export type FitModelInput = {
 export type FitModelOutput = {
 	accuracy: number
 	loss: number
+	success: true
+} | {
+	message: string
+	success: false
 }
 
 let labelsNames: string[] = []
@@ -65,12 +69,16 @@ export const train = (): Promise<[number, number, string[], number]> => {
 			// Handle the worker's message of completion
 			worker.on('message', (data: FitModelOutput) => {
 				console.log('message recieved')
-				resolve([
-					data.loss,
-					data.accuracy,
-					labelsNames,
-					features[0].length
-				])
+				if (data.success) {
+					resolve([
+						data.loss,
+						data.accuracy,
+						labelsNames,
+						features[0].length
+					]);
+				} else {
+					reject(data.message);
+				}
 			})
 		} catch (error) {
 			reject(error)
